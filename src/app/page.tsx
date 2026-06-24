@@ -1,82 +1,94 @@
 import Image from "next/image";
-import { getOrganization } from "@/lib/assoconnect";
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
-async function testDatabase(): Promise<{ ok: boolean; tables: string[] }> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase.rpc("get_public_tables");
-    if (error) throw error;
-    return { ok: true, tables: data?.map((r: { table_name: string }) => r.table_name) ?? [] };
-  } catch {
-    return { ok: false, tables: [] };
-  }
-}
-
-async function testApi(): Promise<{ ok: boolean; platformName: string | null }> {
-  try {
-    const org = await getOrganization();
-    return { ok: true, platformName: org.name };
-  } catch {
-    return { ok: false, platformName: null };
-  }
-}
-
-function StatusIcon({ ok }: { ok: boolean }) {
-  return ok ? (
-    <span className="text-green-500 text-2xl">✓</span>
-  ) : (
-    <span className="text-red-500 text-2xl">✗</span>
-  );
-}
-
-export default async function Home() {
-  const [db, api] = await Promise.all([testDatabase(), testApi()]);
-  const wsName = (await import("@/config/site")).siteConfig.name;
-
+export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 p-8">
-      <div className="absolute top-4 left-4 text-sm font-bold bg-black text-white px-3 py-1 rounded-full">
-        {wsName}
-      </div>
-      <div className="flex flex-col items-center gap-4">
-        <Image src="/mascot.png" alt="Mascot" width={160} height={160} priority />
-        <h1 className="text-4xl font-bold">Padawan aimee is ready</h1>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Navbar */}
+      <header className="flex items-center justify-between px-8 py-4 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <Image src="/mascot.png" alt="Logo" width={32} height={32} />
+          <span className="font-bold text-lg">WS32</span>
+        </div>
+        <nav className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            Se connecter
+          </Link>
+          <Link
+            href="/signup"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+          >
+            S&apos;inscrire
+          </Link>
+        </nav>
+      </header>
 
-      <div className="flex flex-col gap-6 w-full max-w-md">
-        <div className="border rounded-xl p-6 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <StatusIcon ok={db.ok} />
-            <h2 className="text-lg font-semibold">Test database connection</h2>
+      {/* Hero */}
+      <main className="flex-1 flex flex-col items-center justify-center gap-12 px-8 py-20 text-center">
+        <div className="flex flex-col items-center gap-6 max-w-2xl">
+          <Image src="/mascot.png" alt="Mascot" width={96} height={96} priority />
+          <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
+            Gérez votre association<br />
+            <span className="text-gray-400">simplement.</span>
+          </h1>
+          <p className="text-lg text-gray-500 max-w-md">
+            Connectez-vous à vos données AssoConnect, suivez vos membres et
+            pilotez votre organisation depuis un seul endroit.
+          </p>
+          <div className="flex gap-3 mt-2">
+            <Link
+              href="/signup"
+              className="px-6 py-3 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 transition-colors"
+            >
+              Commencer gratuitement
+            </Link>
+            <Link
+              href="/login"
+              className="px-6 py-3 text-base font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              Se connecter
+            </Link>
           </div>
-          {db.ok && (
-            <p className="text-sm text-gray-600">
-              Number of tables: {db.tables.length}
-              {db.tables.length > 0 && (
-                <span className="ml-1 opacity-60">
-                  ({db.tables.slice(0, 3).join(", ")}
-                  {db.tables.length > 3 ? "…" : ""})
-                </span>
-              )}
-            </p>
-          )}
         </div>
 
-        <div className="border rounded-xl p-6 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <StatusIcon ok={api.ok} />
-            <h2 className="text-lg font-semibold">Test API connection</h2>
-          </div>
-          {api.ok && api.platformName && (
-            <p className="text-sm text-gray-600">
-              Name of the platform: <span className="font-medium">{api.platformName}</span>
-            </p>
-          )}
+        {/* Features */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl w-full mt-8">
+          {[
+            {
+              icon: "🏛️",
+              title: "Données en temps réel",
+              desc: "Synchronisation directe avec l'API AssoConnect.",
+            },
+            {
+              icon: "👥",
+              title: "Gestion des membres",
+              desc: "Consultez et filtrez vos adhérents en un clic.",
+            },
+            {
+              icon: "🔒",
+              title: "Accès sécurisé",
+              desc: "Authentification via Supabase, données protégées.",
+            },
+          ].map((f) => (
+            <div
+              key={f.title}
+              className="border border-gray-100 rounded-2xl p-6 text-left flex flex-col gap-2"
+            >
+              <span className="text-3xl">{f.icon}</span>
+              <h3 className="font-semibold">{f.title}</h3>
+              <p className="text-sm text-gray-500">{f.desc}</p>
+            </div>
+          ))}
         </div>
-      </div>
-    </main>
+      </main>
+
+      {/* Footer */}
+      <footer className="text-center py-6 text-xs text-gray-400 border-t border-gray-100">
+        © 2026 WS32 · Propulsé par AssoConnect
+      </footer>
+    </div>
   );
 }
